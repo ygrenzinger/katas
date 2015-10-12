@@ -1,3 +1,6 @@
+package diamond;
+
+import org.assertj.core.api.StrictAssertions;
 import org.junit.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,7 +12,7 @@ public class DiamondTest {
 
     @Test
     public void printA() {
-        assertThat(Diamond.print('A')).isEqualTo("A");
+        StrictAssertions.assertThat(Diamond.print('A')).isEqualTo("A");
     }
 
     @Test

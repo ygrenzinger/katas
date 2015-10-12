@@ -1,3 +1,5 @@
+package diamond;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
