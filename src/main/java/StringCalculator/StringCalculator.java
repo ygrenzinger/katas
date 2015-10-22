@@ -18,48 +18,46 @@ public class StringCalculator {
     private final static String RETURN_LINE = "\n";
     private final static String COMMA = ",";
 
-    public static final Pattern CUSTOM_SEPARATOR_PATTERN = Pattern.compile("^(//(.)\n).*$");
+    private List<String> separators = new ArrayList<>();
 
-    public static int add(String input) throws NegativeNumberException {
+    {
+        separators.addAll(Arrays.asList(RETURN_LINE, COMMA));
+    }
+
+    private static String VALIDATION_REGEX = "^(//(.|\\[.+\\])\n)?(-?\\d+(.+|\n))*(-?\\d+)$";
+    private static final Pattern CUSTOM_SEPARATOR_PATTERN = Pattern.compile("^(//(.|\\[.+\\])\n)((.|\\n)*)$");
+
+    public int add(String input) {
         if (isEmpty(input)) return 0;
+        if (!input.matches(VALIDATION_REGEX)) throw new RuntimeException("Wrong input");
 
-        List<String> separators = Arrays.asList(RETURN_LINE, COMMA);
+        input = extractCustomDelimiter(input);
+        checkIfNegativeNumbers(input);
 
+        return splitInput(input).mapToInt(Integer::valueOf).filter(i -> i < 1001).sum();
+    }
+
+    private void checkIfNegativeNumbers(String input) {
+        List<String> negativeNumbers = splitInput(input).filter(s -> Integer.valueOf(s) < 0).collect(Collectors.toList());
+        if (!negativeNumbers.isEmpty()) throw new NegativeNumberException(negativeNumbers);
+    }
+
+    private String extractCustomDelimiter(String input) {
         Matcher matcher = CUSTOM_SEPARATOR_PATTERN.matcher(input);
         if (matcher.matches()) {
             String separator = matcher.group(2);
-            separators = Arrays.asList(separator);
-            input = input.substring(matcher.group(1).length());
+            separator = separator.replace("[", "").replace("]","").replace("$", "\\$").replace("*", "\\*");
+            separators.add(separator);
+            input = input.substring(input.indexOf('\n') + 1);
         }
-
-        if (separators.stream().anyMatch(input::contains)) {
-            List<String> negativeNumbers = new ArrayList<>();
-            int sum = splitInput(input, buildSplitSeparators(separators))
-                    .map(s -> {
-                        if (s.startsWith("-")) {
-                            negativeNumbers.add(s);
-                            return "0";
-                        }
-                        return s;
-                    })
-                    .mapToInt(Integer::parseInt)
-                    .filter(value -> value <= 1000)
-                    .sum();
-            if (!negativeNumbers.isEmpty()) {
-                throw new NegativeNumberException(negativeNumbers);
-            }
-            return sum;
-
-        }
-
-        return Integer.parseInt(input);
+        return input;
     }
 
-    private static String buildSplitSeparators(List<String> separators) {
+    private Stream<String> splitInput(String input) {
+        return Stream.of(input.split(buildSplitSeparators()));
+    }
+
+    private String buildSplitSeparators() {
         return separators.stream().collect(Collectors.joining("|"));
-    }
-
-    private static Stream<String> splitInput(String input, String sep) {
-        return Stream.of(input.split(sep));
     }
 }
