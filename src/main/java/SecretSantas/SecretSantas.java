@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public class SecretSantas {
 
     public static final String GIVING_TO_SEPARATOR = " -> ";
+    public static final String FIRSTNAME_LASTNAME_SEPARATOR = " ";
 
     public static Set<String> buildPairOfGiverReceiver(final List<String> persons) {
         Set<String> giverRecieverPairs = new HashSet<>();
@@ -36,8 +37,8 @@ public class SecretSantas {
 
     private static String buildGiftMessage(List<String> persons, Queue<String> queueOfGivers, List<String> personsWhoHaveReceiveGift) {
         final String giver = queueOfGivers.remove();
-        StringBuilder giftMessage = new StringBuilder(giver + GIVING_TO_SEPARATOR);
-        final Predicate<String> isPersonFamilySameAsGiver = buildPredicateSameFamily(extractFamilyName(giver.split(" ")[1]));
+        StringBuilder giftMessage = new StringBuilder(personWithoutMail(giver) + GIVING_TO_SEPARATOR);
+        final Predicate<String> isPersonFamilySameAsGiver = buildPredicateSameFamily(extractFamilyName(giver));
         persons.stream().filter(person -> !(person.equals(giver) || personsWhoHaveReceiveGift.contains(person)))
                 .filter(isPersonFamilySameAsGiver)
                 .findFirst()
@@ -50,12 +51,19 @@ public class SecretSantas {
 
     private static Predicate<String> buildPredicateSameFamily(final String person) {
         return otherPerson -> {
-            String familyName = extractFamilyName(otherPerson.split(" ")[1]);
+            String familyName = extractFamilyName(otherPerson);
             return !familyName.equals(person);
         };
     }
 
     private static String extractFamilyName(String person) {
+        return person.split(FIRSTNAME_LASTNAME_SEPARATOR)[1];
+    }
+
+    private static String personWithoutMail(String person) {
+        if (person.contains("@")) {
+            return person.substring(0, person.indexOf("<")).trim();
+        }
         return person;
     }
 }
